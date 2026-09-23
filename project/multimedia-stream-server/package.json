@@ -1,0 +1,22 @@
+{
+  "name": "multimedia-stream-server",
+  "version": "0.1.0",
+  "description": "Servidor de streaming de baja latencia: CRDT sync (probado, con auth, persistencia y bus multi-instancia vía Redis), WebRTC/FFmpeg/vision (arquitectura sin ejecutar).",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "test": "node state/crdt_sync_test.mjs",
+    "test:multi-instance": "node state/crdt_multi_instance_test.mjs"
+  },
+  "dependencies": {
+    "redis": "^4.7.1",
+    "ws": "^8.17.0",
+    "yjs": "^13.6.18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.23.0",
+    "typescript": "^5.4.5"
+  }
+}

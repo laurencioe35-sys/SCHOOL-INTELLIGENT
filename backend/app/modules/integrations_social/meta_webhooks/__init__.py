@@ -1,0 +1,1 @@
+"""Verified, idempotent Meta webhook primitives."""

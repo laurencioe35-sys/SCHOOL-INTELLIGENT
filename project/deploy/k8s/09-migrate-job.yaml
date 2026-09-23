@@ -1,0 +1,24 @@
+# Job (no Deployment): las migraciones corren UNA VEZ por release, no
+# como un proceso de larga duración. Se referencia como pre-install/
+# pre-upgrade hook si usas Helm, o se aplica manualmente antes del
+# rollout si usas kubectl/kustomize plano (ver deploy/k8s/README.md).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: erp-migrate
+  namespace: erp-educativo
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: erp-backend-sa
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: "REGISTRY/erp-core-backend:TAG"  # mismo build que 10-core-erp-backend.yaml
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: erp-config
+            - secretRef:
+                name: erp-secrets

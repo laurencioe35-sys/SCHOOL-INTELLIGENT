@@ -1,0 +1,61 @@
+# UNA sola réplica por diseño: batch_db_worker.py hace `BLPOP`/`LPOP`
+# secuencial sobre la misma cola Redis (`grades:pending`) sin
+# coordinación de locks entre réplicas — dos réplicas correrían el mismo
+# lote en paralelo y podrían duplicar/pisarse notas. Si el volumen de
+# notas crece al punto de necesitar más throughput, la corrección
+# correcta es particionar la cola (ej. por classroom_id, una cola por
+# partición) y ENTONCES sí escalar el worker por partición — no subir
+# replicas a ciegas sobre la cola única actual.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-worker
+  namespace: erp-educativo
+  labels:
+    app: batch-worker
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # evita 2 workers corriendo un instante durante un rollout
+  selector:
+    matchLabels:
+      app: batch-worker
+  template:
+    metadata:
+      labels:
+        app: batch-worker
+    spec:
+      serviceAccountName: erp-backend-sa
+      containers:
+        - name: batch-worker
+          image: "REGISTRY/erp-core-backend:TAG"  # mismo build que core-erp-backend
+          command: ["python", "workers/batch_db_worker.py"]
+          ports:
+            - containerPort: 9100  # métricas Prometheus (BATCH_WORKER_METRICS_PORT)
+          envFrom:
+            - configMapRef:
+                name: erp-config
+            - secretRef:
+                name: erp-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-worker-metrics
+  namespace: erp-educativo
+  labels:
+    app: batch-worker
+spec:
+  selector:
+    app: batch-worker
+  ports:
+    - port: 9100
+      targetPort: 9100
+      name: metrics

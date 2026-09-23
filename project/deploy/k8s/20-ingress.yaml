@@ -1,0 +1,40 @@
+# Asume ingress-nginx (o cualquier controlador compatible con estas
+# anotaciones) y cert-manager para TLS automático vía Let's Encrypt.
+# Ajustar el host real y el ClusterIssuer al proveedor DNS/TLS que uses.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erp-educativo
+  namespace: erp-educativo
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"   # WebSockets de larga duración (CRDT)
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: crdt-sync-server
+spec:
+  tls:
+    - hosts:
+        - api.tu-dominio.edu.pe
+        - crdt.tu-dominio.edu.pe
+      secretName: erp-educativo-tls
+  rules:
+    - host: api.tu-dominio.edu.pe
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: core-erp-backend
+                port:
+                  number: 8200
+    - host: crdt.tu-dominio.edu.pe
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: crdt-sync-server
+                port:
+                  number: 4444

@@ -1,0 +1,97 @@
+# Puede escalar horizontalmente sin session affinity: cada réplica
+# publica/suscribe actualizaciones vía Redis Pub/Sub (ver
+# state/crdt_bus.ts), así que un alumno puede conectarse a CUALQUIER
+# réplica y converger al mismo Y.Doc que el resto del aula.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crdt-sync-server
+  namespace: erp-educativo
+  labels:
+    app: crdt-sync-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: crdt-sync-server
+  template:
+    metadata:
+      labels:
+        app: crdt-sync-server
+    spec:
+      serviceAccountName: erp-backend-sa
+      containers:
+        - name: crdt-sync-server
+          image: "REGISTRY/erp-crdt-sync-server:TAG"
+          command: ["npx", "tsx", "server.ts"]
+          ports:
+            - containerPort: 4444
+          envFrom:
+            - configMapRef:
+                name: erp-config
+            - secretRef:
+                name: erp-secrets
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: crdt-storage
+              mountPath: /app/storage
+      volumes:
+        # PersistentVolumeClaim en vez del bind mount local de
+        # docker-compose. Si CRDT_STORAGE_DIR solo guarda snapshots de
+        # recuperación (no el estado autoritativo, que vive en Redis vía
+        # el bus), un volumen ReadWriteOnce por pod basta; si en algún
+        # momento necesita ser compartido entre réplicas, cambiar a
+        # ReadWriteMany (ej. EFS en AWS) en vez de este PVC simple.
+        - name: crdt-storage
+          persistentVolumeClaim:
+            claimName: crdt-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crdt-storage
+  namespace: erp-educativo
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crdt-sync-server
+  namespace: erp-educativo
+spec:
+  selector:
+    app: crdt-sync-server
+  ports:
+    - port: 4444
+      targetPort: 4444
+      name: ws
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: crdt-sync-server
+  namespace: erp-educativo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: crdt-sync-server
+  minReplicas: 2
+  maxReplicas: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,1 @@
+"""Consent-first, pseudonymized whiteboard training corpus pipeline."""

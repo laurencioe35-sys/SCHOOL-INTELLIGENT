@@ -1,0 +1,14 @@
+critical_entities:
+  - invoices
+  - journal_entries
+  - payroll_runs
+  - user_roles
+  - permissions
+  - payment_transactions
+  - inventory_adjustments
+  - chart_of_accounts
+pending_for_future_tables:
+  - payroll_runs
+  - user_roles
+  - permissions
+  - inventory_adjustments

@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-erp-backend
+  namespace: erp-educativo
+  labels:
+    app: core-erp-backend
+spec:
+  replicas: 2  # HPA lo ajusta entre minReplicas/maxReplicas de abajo
+  selector:
+    matchLabels:
+      app: core-erp-backend
+  template:
+    metadata:
+      labels:
+        app: core-erp-backend
+    spec:
+      serviceAccountName: erp-backend-sa
+      containers:
+        - name: core-erp-backend
+          image: "REGISTRY/erp-core-backend:TAG"
+          ports:
+            - containerPort: 8200
+          envFrom:
+            - configMapRef:
+                name: erp-config
+            - secretRef:
+                name: erp-secrets
+          # Liveness/readiness contra el health-check trivial que ya
+          # expone main.py (`GET /`) — sin esto, un pod que se cuelga
+          # (ej. deadlock en el pool de conexiones) sigue recibiendo
+          # tráfico indefinidamente en vez de que K8s lo reinicie/saque
+          # del Service.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8200
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8200
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-erp-backend
+  namespace: erp-educativo
+spec:
+  selector:
+    app: core-erp-backend
+  ports:
+    - port: 8200
+      targetPort: 8200
+      name: http
+---
+# Autoescalado horizontal: el motivo real de saltar a K8s en vez de
+# seguir con docker-compose (que este mismo repo documenta como
+# "no antes de que haya usuarios reales, no antes"). CPU 70% es un punto
+# de partida razonable para una API FastAPI stateless; ajustar con datos
+# reales de carga una vez en producción.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: core-erp-backend
+  namespace: erp-educativo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: core-erp-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,1 @@
+"""Academic transcripts and graduation credentials."""

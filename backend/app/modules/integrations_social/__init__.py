@@ -1,0 +1,1 @@
+"""Secure social and messaging integration boundaries."""

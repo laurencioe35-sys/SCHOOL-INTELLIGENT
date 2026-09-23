@@ -1,0 +1,7 @@
+{
+  "task_id": "pizarra_dataset_consent",
+  "title": "Consent-first whiteboard dataset pipeline",
+  "module": "backend/app/modules/whiteboard/dataset_pipeline",
+  "gates": ["G42", "G43", "G44"],
+  "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_dataset_pipeline.py -q\""
+}

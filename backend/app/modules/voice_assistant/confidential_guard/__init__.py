@@ -1,0 +1,1 @@
+"""Shared permission and field-level redaction guard."""

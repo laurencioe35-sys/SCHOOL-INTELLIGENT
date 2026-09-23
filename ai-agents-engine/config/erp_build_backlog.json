@@ -1,0 +1,452 @@
+{
+  "tasks": [
+    {
+      "task_id": "audit_rls",
+      "title": "Tenant audit and row isolation",
+      "module": "backend/app/core/audit.py",
+      "validation_command": "python -m pytest backend/tests/test_audit_rls.py -q",
+      "execute_validation": true,
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"]
+    },
+    {
+      "task_id": "colegio_virtual_curriculum",
+      "title": "Curriculum catalogs and syllabus",
+      "module": "backend/app/modules/colegio_virtual/curriculum",
+      "depends_on": ["audit_rls"],
+      "validation_command": "python -m pytest backend/tests/test_curriculum.py -q",
+      "execute_validation": true,
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"]
+    },
+    {
+      "task_id": "colegio_virtual_admissions",
+      "title": "Admissions and waitlist",
+      "module": "backend/app/modules/colegio_virtual/admissions",
+      "depends_on": ["colegio_virtual_curriculum"],
+      "validation_command": "python -m pytest backend/tests/test_admissions.py -q",
+      "execute_validation": true,
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"]
+    },
+    {
+      "task_id": "colegio_virtual_gradebook",
+      "title": "Gradebook and report cards",
+      "module": "backend/app/modules/colegio_virtual/gradebook",
+      "depends_on": ["colegio_virtual_admissions"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_virtual_classroom",
+      "title": "Virtual classroom lifecycle",
+      "module": "backend/app/modules/colegio_virtual/virtual_classroom",
+      "depends_on": ["colegio_virtual_gradebook"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_proctoring",
+      "title": "Assessment proctoring",
+      "module": "backend/app/modules/colegio_virtual/proctoring",
+      "depends_on": ["colegio_virtual_gradebook"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_content_library",
+      "title": "Educational content library",
+      "module": "backend/app/modules/colegio_virtual/content_library",
+      "depends_on": ["colegio_virtual_curriculum"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_regulatory",
+      "title": "Regulatory compliance reporting",
+      "module": "backend/app/modules/colegio_virtual/regulatory",
+      "depends_on": ["colegio_virtual_gradebook"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_credentials",
+      "title": "Academic credentials and verification",
+      "module": "backend/app/modules/colegio_virtual/credentials",
+      "depends_on": ["colegio_virtual_gradebook", "colegio_virtual_regulatory"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_device_fleet",
+      "title": "Interactive board device fleet",
+      "module": "backend/app/modules/whiteboard/device_fleet",
+      "depends_on": ["colegio_virtual_virtual_classroom"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_collaboration",
+      "title": "Collaborative whiteboard",
+      "module": "backend/app/modules/whiteboard/collaboration",
+      "depends_on": ["pizarra_device_fleet"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "payments_integration",
+      "title": "Payment providers and reconciliation",
+      "module": "backend/app/modules/payments",
+      "depends_on": ["audit_rls"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "verifiq_platform_integration",
+      "title": "VerifiQ KYC AML signature platform",
+      "module": "verifiq-backend/app",
+      "depends_on": ["audit_rls", "pizarra_platform_implementation"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d verifiq-backend && .venv311\\Scripts\\python.exe -m pytest tests -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_platform_implementation",
+      "title": "Pizarra real-time platform implementation",
+      "module": "backend/app/modules/whiteboard",
+      "depends_on": ["colegio_virtual_virtual_classroom"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "python -m pytest backend/tests -q",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_maestro_3d_prototype_integration",
+      "title": "Integrate external Pizarra Maestro 3D prototype",
+      "module": "D:/pizarra_maestro_3d.html",
+      "depends_on": ["colegio_virtual_virtual_classroom"],
+      "required_roles": ["discovery", "planning", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "node --check D:/pizarra_maestro_3d.html",
+      "execute_validation": false
+    },
+    {
+      "task_id": "colegio_virtual_frontend_portals",
+      "title": "Student teacher guardian portal shell",
+      "module": "frontend/src/App.tsx",
+      "depends_on": ["colegio_virtual_gradebook", "colegio_virtual_virtual_classroom"],
+      "required_roles": ["discovery", "planning", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d frontend && npm run build\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "erp_real_authentication",
+      "title": "Server-issued authentication for portals",
+      "module": "backend/app/routes.py",
+      "depends_on": ["colegio_virtual_frontend_portals"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_student_me.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "payments_nequi_pse",
+      "title": "Colombian asynchronous payment providers",
+      "module": "backend/app/modules/payments/providers",
+      "depends_on": ["payments_integration", "erp_real_authentication"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_local_payment_providers.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "voice_confidential_assistant",
+      "title": "Voice STT TTS and confidentiality guard",
+      "module": "backend/app/modules/voice_assistant",
+      "depends_on": ["audit_rls", "payments_integration"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_voice_assistant.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "meta_whatsapp_integrations",
+      "title": "Meta webhook and WhatsApp billing notifications",
+      "module": "backend/app/modules/integrations_social",
+      "depends_on": ["payments_integration", "voice_confidential_assistant"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_meta_integrations.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_resilience_layer",
+      "title": "Whiteboard controlled degradation and AI cost breaker",
+      "module": "backend/app/modules/whiteboard/resilience_layer",
+      "depends_on": ["pizarra_platform_implementation", "pizarra_collaboration"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_whiteboard_resilience.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_accessibility_captions",
+      "title": "Accessible live captions and shape announcements",
+      "module": "frontend/src/accessibility/LiveCaptionsOverlay.tsx",
+      "depends_on": ["pizarra_platform_implementation"],
+      "required_roles": ["discovery", "planning", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d frontend && npm run build\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_recording_replay",
+      "title": "Event-based lesson recording and replay",
+      "module": "backend/app/modules/whiteboard/recording_replay",
+      "depends_on": ["pizarra_collaboration", "pizarra_accessibility_captions"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_lesson_recording.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_dataset_consent",
+      "title": "Consent-first whiteboard dataset pipeline",
+      "module": "backend/app/modules/whiteboard/dataset_pipeline",
+      "depends_on": ["pizarra_platform_implementation", "pizarra_recording_replay"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_dataset_pipeline.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "erp_schema_migrations",
+      "title": "Repeatable ERP schema migrations",
+      "module": "backend/app/migrations.py",
+      "depends_on": ["audit_rls"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_migrations.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_teacher_guardian_portals",
+      "title": "Teacher and guardian RLS portals",
+      "module": "backend/app/routes.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_frontend_portals"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_guardian_portal.py tests/test_teacher_portal.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_audio_beamforming",
+      "title": "Edge delay-and-sum microphone beamforming",
+      "module": "backend/app/modules/whiteboard/audio_beamforming",
+      "depends_on": ["pizarra_resilience_layer", "voice_confidential_assistant"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_beamforming.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_sketch_confirmation_ui",
+      "title": "Human-confirmed sketch-to-vector UI",
+      "module": "frontend/src/whiteboard",
+      "depends_on": ["pizarra_platform_implementation", "pizarra_resilience_layer"],
+      "required_roles": ["discovery", "planning", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d frontend && npm run build\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "pizarra_collaboration_persistence",
+      "title": "Durable idempotent whiteboard operations",
+      "module": "backend/app/modules/whiteboard/collaboration/repository.py",
+      "depends_on": ["pizarra_collaboration", "erp_schema_migrations"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_whiteboard_repository.py tests/test_migrations.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_curriculum_persistence",
+      "title": "Durable tenant curriculum catalogs",
+      "module": "backend/app/modules/colegio_virtual/curriculum/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_curriculum"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_curriculum_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_admissions_persistence",
+      "title": "Durable admissions and waitlist repository",
+      "module": "backend/app/modules/colegio_virtual/admissions/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_admissions"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_admissions_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_gradebook_persistence",
+      "title": "Durable assignment and gradebook repository",
+      "module": "backend/app/modules/colegio_virtual/gradebook/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_gradebook"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_gradebook_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_content_persistence",
+      "title": "Durable licensed educational materials",
+      "module": "backend/app/modules/colegio_virtual/content_library/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_content_library"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_content_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_credentials_persistence",
+      "title": "Durable academic certificates and revocation",
+      "module": "backend/app/modules/colegio_virtual/credentials/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_credentials"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_credentials_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_proctoring_persistence",
+      "title": "Durable consent and integrity flags",
+      "module": "backend/app/modules/colegio_virtual/proctoring/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_proctoring"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_proctoring_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_classroom_persistence",
+      "title": "Durable live class attendance records",
+      "module": "backend/app/modules/colegio_virtual/virtual_classroom/repository.py",
+      "depends_on": ["erp_schema_migrations", "colegio_virtual_virtual_classroom"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_virtual_classroom_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "payments_transaction_persistence",
+      "title": "Durable idempotent payment transactions",
+      "module": "backend/app/modules/payments/repository.py",
+      "depends_on": ["erp_schema_migrations", "payments_integration", "payments_nequi_pse"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_payments_repository.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "payments_accounting_reconciliation",
+      "title": "Payment to balanced journal reconciliation",
+      "module": "backend/app/modules/payments/reconciliation/accounting_bridge.py",
+      "depends_on": ["payments_transaction_persistence", "audit_rls"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_payment_accounting_bridge.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "erp_production_readiness",
+      "title": "Production configuration readiness gates",
+      "module": "backend/app/config.py",
+      "depends_on": ["erp_schema_migrations", "audit_rls"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_production_readiness.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "erp_operational_readiness",
+      "title": "Database and schema operational readiness",
+      "module": "backend/app/main.py",
+      "depends_on": ["erp_production_readiness", "erp_schema_migrations"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_readiness.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "colegio_virtual_role_visibility",
+      "title": "Role-aware portal visibility",
+      "module": "backend/app/routes.py",
+      "depends_on": ["erp_real_authentication", "colegio_virtual_teacher_guardian_portals"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_admission_visibility.py -q\"",
+      "execute_validation": true
+    },
+    {
+      "task_id": "payments_nequi_official_webhook_contract",
+      "title": "Implement verified Nequi webhook and idempotent reconciliation",
+      "module": "backend/app/modules/payments/providers/nequi.py",
+      "depends_on": ["payments_integration", "payments_accounting_reconciliation"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_local_payment_providers.py tests/test_payment_accounting_bridge.py -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires official Nequi webhook signature contract, credentials, version and sandbox vectors documented in docs/PAYMENTS_COLOMBIA.md"
+    },
+    {
+      "task_id": "payments_pse_official_webhook_contract",
+      "title": "Implement verified PSE webhook and idempotent reconciliation",
+      "module": "backend/app/modules/payments/providers/pse.py",
+      "depends_on": ["payments_integration", "payments_accounting_reconciliation"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_local_payment_providers.py tests/test_payment_accounting_bridge.py -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires official PSE webhook signature contract, credentials, version and sandbox vectors documented in docs/PAYMENTS_COLOMBIA.md"
+    },
+    {
+      "task_id": "meta_whatsapp_production_templates",
+      "title": "Activate approved WhatsApp billing notification templates",
+      "module": "backend/app/modules/integrations_social/whatsapp",
+      "depends_on": ["meta_whatsapp_integrations"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_meta_integrations.py -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires Meta app credentials, approved template name and production webhook verification"
+    },
+    {
+      "task_id": "pizarra_hwr_consent_dataset",
+      "title": "Train and validate consented whiteboard handwriting model",
+      "module": "backend/app/modules/whiteboard/sketch_engine",
+      "depends_on": ["pizarra_platform_implementation", "pizarra_dataset_consent"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_dataset_pipeline.py tests/test_whiteboard.py -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires consented ground-truth dataset, versioned model artifact and evaluation protocol from the whiteboard master document"
+    },
+    {
+      "task_id": "pizarra_hardware_audio_validation",
+      "title": "Validate microphone beamforming and STT on real classroom hardware",
+      "module": "backend/app/modules/whiteboard/audio_beamforming",
+      "depends_on": ["pizarra_audio_beamforming", "voice_confidential_assistant"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests/test_beamforming.py -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires approved MEMS array hardware, authorized classroom recordings, AEC setup and real STT benchmark"
+    },
+    {
+      "task_id": "pizarra_math_handwriting_pipeline",
+      "title": "Implement contextual handwriting to MathML and graph pipeline",
+      "module": "backend/app/modules/whiteboard/math_handwriting",
+      "depends_on": ["pizarra_platform_implementation", "pizarra_hwr_consent_dataset"],
+      "required_roles": ["discovery", "planning", "backend", "frontend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d backend && python -m pytest tests -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires the approved HWR model, MathML/SymPy contract and contextual evaluation corpus"
+    },
+    {
+      "task_id": "verifiq_regulated_provider_contracts",
+      "title": "Activate regulated KYC AML and certified-signature providers",
+      "module": "verifiq-backend/app/adapters",
+      "depends_on": ["verifiq_platform_integration"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "cmd /c \"cd /d verifiq-backend && .venv311\\Scripts\\python.exe -m pytest tests -q\"",
+      "execute_validation": true,
+      "blocked_reason": "Requires contracted KYC, AML, RENIEC/SUNAT and PSC/TSA providers, production credentials and regulatory approval"
+    },
+    {
+      "task_id": "agent_real_transcription_source",
+      "title": "Connect authorized audio transcription source to agent stream",
+      "module": "multimedia-stream-server",
+      "depends_on": ["erp_operational_readiness"],
+      "required_roles": ["discovery", "planning", "backend", "quality", "security", "review", "repair", "verify"],
+      "validation_command": "docker compose run --rm agent-worker python platform_status.py",
+      "execute_validation": true,
+      "blocked_reason": "Requires authorized transcription provider, audio capture contract and tenant-scoped production stream integration"
+    }
+  ]
+}

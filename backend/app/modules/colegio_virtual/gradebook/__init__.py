@@ -1,0 +1,1 @@
+"""Grade calculation and academic reporting services."""

@@ -1,0 +1,103 @@
+# Docker Compose de DESARROLLO LOCAL.
+#
+# TRANSPARENCIA: esto NO es Kubernetes. Es la forma honesta y realista de
+# levantar todo el stack en una sola máquina para desarrollo, que es lo
+# que necesitas ahora mismo en VS Code. El salto a K8s (Media Pods por
+# sesión, autoescalado) tiene sentido más adelante, cuando haya usuarios
+# reales y necesites aislar/escalar cada clase en vivo por separado —
+# no antes, porque añade complejidad operativa que no aporta nada en fase
+# de desarrollo/demo.
+
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=erp_educativo
+    ports:
+      - "5432:5432"
+    volumes:
+      - erp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d erp_educativo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: ./core-erp-backend
+    command: alembic upgrade head
+    environment:
+      - ERP_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/erp_educativo
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  core-erp-backend:
+    build: ./core-erp-backend
+    ports:
+      - "8200:8200"
+    environment:
+      - ERP_REDIS_URL=redis://redis:6379/0
+      - ERP_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/erp_educativo
+      - ERP_SECRET_KEY=change-me-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  batch-worker:
+    build: ./core-erp-backend
+    command: python workers/batch_db_worker.py
+    ports:
+      - "9100:9100"
+    environment:
+      - ERP_REDIS_URL=redis://redis:6379/0
+      - ERP_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/erp_educativo
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  crdt-sync-server:
+    build: ./multimedia-stream-server
+    ports:
+      - "4444:4444"
+    command: npx tsx server.ts
+    environment:
+      - ERP_SECRET_KEY=change-me-in-production
+      - ERP_REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - crdt_storage:/app/storage
+
+  # ai-agents-engine se deja fuera del compose intencionalmente: es una
+  # librería que el core-erp-backend importa/invoca, no un servicio HTTP
+  # propio en este MVP. Si más adelante se expone como microservicio
+  # (recomendado cuando el volumen de clases en vivo crezca), agrega aquí
+  # su propio bloque `build: ./ai-agents-engine`.
+
+volumes:
+  erp_pgdata:
+  crdt_storage:

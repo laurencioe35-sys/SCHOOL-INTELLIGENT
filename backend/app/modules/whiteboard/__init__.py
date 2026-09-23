@@ -1,0 +1,1 @@
+"""Tenant-aware whiteboard platform primitives."""

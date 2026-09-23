@@ -1,0 +1,29 @@
+# Configuración NO sensible, compartida por los servicios. Los valores
+# sensibles (contraseñas, API keys, llaves HMAC) NO van aquí — van en
+# Secrets, idealmente sincronizados desde AWS Secrets Manager o Vault vía
+# External Secrets Operator (ver 02-external-secrets.yaml) en vez de
+# vivir como texto plano en git.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-config
+  namespace: erp-educativo
+data:
+  # Postgres y Redis en producción: SERVICIOS GESTIONADOS (ej. Amazon RDS
+  # para Postgres con Multi-AZ, y Amazon ElastiCache o MemoryDB para
+  # Redis), NO pods dentro de este clúster. Un StatefulSet de Postgres
+  # autogestionado en K8s es operativamente mucho más caro de mantener
+  # (backups, failover, parches de seguridad) que un servicio gestionado,
+  # y es exactamente el salto de complejidad que docker-compose.yml
+  # documenta como "no antes de que haya usuarios reales" — ya lo hay,
+  # así que corresponde aquí. Reemplaza estos hosts por los endpoints
+  # reales de tu instancia RDS/ElastiCache.
+  ERP_DATABASE_URL_HOST_HINT: "usa el Secret erp-secrets (incluye credenciales)"
+  CORS_ALLOWED_ORIGINS: "https://app.tu-dominio.edu.pe"
+  ERP_RATE_LIMIT_PER_ORG_PER_MIN: "300"
+  ERP_RATE_LIMIT_PER_IP_PER_MIN: "60"
+  ERP_RATE_LIMIT_AUTH_PER_IP_PER_MIN: "10"
+  ERP_RATE_LIMIT_WINDOW_SECONDS: "60"
+  CRDT_PORT: "4444"
+  BATCH_WORKER_METRICS_PORT: "9100"
+  PAYMENT_GATEWAY_PROVIDER: "stripe"

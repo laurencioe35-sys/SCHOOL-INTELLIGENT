@@ -1,0 +1,1 @@
+"""Explainable sketch-to-vector fallback engine."""

@@ -1,0 +1,1 @@
+"""Controlled degradation for whiteboard and AI services."""

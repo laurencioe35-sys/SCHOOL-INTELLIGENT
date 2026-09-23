@@ -1,0 +1,1 @@
+"""Consent-based, non-biometric academic integrity signals."""
